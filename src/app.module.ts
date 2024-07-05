@@ -11,7 +11,7 @@ import { AuthService } from './auth/auth.service';
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
-      port: 5432,
+      port: 3306,
       username: 'root',
       password: 'ZaNiT212!',
       database: 'learn_nestjs2024',
