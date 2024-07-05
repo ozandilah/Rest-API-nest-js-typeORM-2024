@@ -67,7 +67,7 @@ export class AuthService {
         message: 'Invalid Credentials.',
       });
     }
-    const accessToken = sign({ id: userDB.id }, 'access_secret', {
+    const token = sign({ id: userDB.id }, 'access_secret', {
       expiresIn: 60 * 60,
     });
 
@@ -75,7 +75,7 @@ export class AuthService {
       expiresIn: 24 * 60 * 60,
     });
 
-    res.cookie('accessToken', accessToken, {
+    res.cookie('token', token, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, //1 day
     });
@@ -84,16 +84,23 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, //7 days
     });
 
-    res.status(200).send({ message: 'Login Success.' });
+    res.status(200).send({
+      message: 'Login Success.',
+      data: {
+        userdetail: userDB,
+        token: token,
+        refreshToken: refreshToken,
+      },
+    });
   }
   //   AUTH USER
   async authUser(req: Request, res: Response) {
     try {
-      const accessToken = req.cookies['accessToken'];
-      const payload: any = verify(accessToken, 'access_secret');
+      const token = req.cookies['token'];
+      const payload: any = verify(token, 'access_secret');
       if (!payload) {
         return res.status(401).send({
-          message: 'Unauthenticated.',
+          message: 'Tidak terautentikasi.',
         });
       }
 
@@ -103,10 +110,21 @@ export class AuthService {
 
       if (!user) {
         return res.status(401).send({
-          message: 'Unauthenticated.',
+          message: 'Tidak terautentikasi.',
         });
       }
-      return res.status(200).send(user);
+      // Mengembalikan token dan detail user untuk digunakan di frontend dengan format yang lebih sesuai untuk frontend
+      return res.status(200).send({
+        message: 'Autentikasi berhasil.',
+        data: {
+          userdetail: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          },
+          token: token,
+        },
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).send({ message: error });
@@ -125,10 +143,10 @@ export class AuthService {
         });
       }
 
-      const accessToken = sign({ id: payload.id }, 'access_secret', {
+      const token = sign({ id: payload.id }, 'access_secret', {
         expiresIn: 60 * 60,
       });
-      res.cookie('accessToken', accessToken, {
+      res.cookie('token', token, {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
       });
@@ -145,7 +163,7 @@ export class AuthService {
   //   LOGOUT USER
 
   async logoutUser(res: Response) {
-    res.cookie('accessToken', '', {
+    res.cookie('token', '', {
       maxAge: 0,
     });
     res.cookie('refreshToken', '', {
