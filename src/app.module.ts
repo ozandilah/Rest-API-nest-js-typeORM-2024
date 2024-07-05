@@ -9,10 +9,10 @@ import { AuthService } from './auth/auth.service';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'postgres',
+      type: 'mysql',
       host: 'localhost',
       port: 5432,
-      username: 'postgres',
+      username: 'root',
       password: 'ZaNiT212!',
       database: 'learn_nestjs2024',
       entities: [User],
