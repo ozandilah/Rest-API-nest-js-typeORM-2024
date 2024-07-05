@@ -29,8 +29,30 @@ export class AuthService {
         email,
         password: await bcryptjs.hash(password, 12),
       });
+      const token = sign({ id: user.id }, 'access_secret', {
+        expiresIn: 60 * 60,
+      });
+      const refreshToken = sign({ id: user.id }, 'refresh_secret', {
+        expiresIn: 24 * 60 * 60,
+      });
+      res.cookie('token', token, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
       console.log(user);
-      res.status(200).send(user);
+      res.status(200).send({
+        message: 'Register Successfully.',
+        data: {
+          userdetail: user,
+          token: token,
+          refreshToken: refreshToken,
+        },
+      });
     } catch (error) {
       console.error(error);
 
@@ -97,6 +119,7 @@ export class AuthService {
   async authUser(req: Request, res: Response) {
     try {
       const token = req.cookies['token'];
+
       const payload: any = verify(token, 'access_secret');
       if (!payload) {
         return res.status(401).send({
